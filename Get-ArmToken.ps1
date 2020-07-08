@@ -1,5 +1,19 @@
 param([string] $name)
-$response = Invoke-WebRequest -Uri 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&client_id=92efed83-034f-43e6-84cd-3ce46cf28030&resource=https://management.azure.com/' -Method GET -Headers @{Metadata="true"}
-$content = $response.Content | ConvertFrom-Json
-$output = $content.access_token
-Write-Output $output
+function Get-AzCachedAccessToken()
+{
+    $ErrorActionPreference = 'Stop'
+
+    $azureRmProfileModuleVersion = (Get-Module Az.Profile).Version
+    $azureRmProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+    if(-not $azureRmProfile.Accounts.Count) {
+        Write-Error "Ensure you have logged in before calling this function."    
+    }
+  
+    $currentAzureContext = Get-AzContext
+    $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azureRmProfile)
+    Write-Debug ("Getting access token for tenant" + $currentAzureContext.Tenant.TenantId)
+    $token = $profileClient.AcquireAccessToken($currentAzureContext.Tenant.TenantId)
+    $token.AccessToken
+}
+$token = Get-AzCachedAccessToken
+Write-Output $token
