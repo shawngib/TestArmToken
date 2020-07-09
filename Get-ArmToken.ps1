@@ -24,7 +24,7 @@ function Get-AzCachedAccessToken()
     $token.AccessToken
 }
 $token = Get-AzCachedAccessToken
-
+write-output $token
 #setup diag settings
 $uri = "https://management.azure.com/providers/microsoft.aadiam/diagnosticSettings/{0}?api-version=2017-04-01-preview" -f $ruleName
 $body = @"
@@ -63,9 +63,13 @@ $headers = @{
     "Authorization" = "Bearer $token"
     "Content-Type"  = "application/json"
 }
+
+write-output $uri
+
 $response = Invoke-WebRequest -Method Put -Uri $uri -Body $body -Headers $headers
+
+write-output $response
 
 if ($response.StatusCode -ne 200) {
     throw "an error occured: $($response | out-string)"
 }
-write-output $response
